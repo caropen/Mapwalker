@@ -1,0 +1,37 @@
+{
+  "name": "world-countries-centroids",
+  "version": "1.0.0",
+  "description": "Centroids of world countries in CSV, GeoJson, etc",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "release": "np"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gavinr/world-countries-centroids.git"
+  },
+  "keywords": [
+    "geo",
+    "open-data",
+    "countries",
+    "centroids"
+  ],
+  "author": "Gavin Rehkemper",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gavinr/world-countries-centroids/issues"
+  },
+  "homepage": "https://github.com/gavinr/world-countries-centroids#readme",
+  "devDependencies": {
+    "@esri/arcgis-rest-feature-service": "^4.0.3",
+    "@esri/arcgis-rest-request": "^4.0.3",
+    "@turf/turf": "^6.5.0",
+    "np": "^7.6.2",
+    "papaparse": "^5.3.2"
+  },
+  "np": {
+    "tests": false,
+    "yarn": false
+  }
+}
