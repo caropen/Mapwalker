@@ -1,21 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaflet Quickstart</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-     crossorigin=""/>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Vector Tiles in Leaflet JS</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.umd.min.js"></script>
+    <link href="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.css" rel="stylesheet" />
+    <script src="https://cdn.maptiler.com/leaflet-maptilersdk/v4.1.0/leaflet-maptilersdk.umd.min.js"></script>
+    <style>
+      #map {
+        width: 50%;
+        height: 300px; /* fixed height */
+        margin: 0 auto 10px auto; /* top 0, auto left/right, bottom 10px */
+        display: block; /* ensure margin auto works */
+    }
+    </style>
+  </head>
+  <body>
     <div id="map"></div>
+    <script>
+        const key = 'X3hcXwuznTkMoRRLJTQO';
+      
+        const map = L.map('map').setView([0, 0], 1);
+      
+        const mtLayer = L.maptiler.maptilerLayer({
+          apiKey: key,
+          style: "019b08a2-2edf-79a1-af13-437f1b7433e4", // custom style ID
+        }).addTo(map);
 
-     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-     crossorigin=""></script>
-    <script src="script.js"></script>
-</body>
+         // Load GeoJSON (from file or variable)
+        fetch("countries.geojson")
+            .then(r => r.json())
+            .then(countries => {
+            // Add points to the map (optional)
+            // L.geoJSON(countries).addTo(map);
+
+            // Center on Germany (ISO code = DE)
+            centerOn("DE", countries);
+            });
+
+        function centerOn(isoCode, geojson) {
+            const feature = geojson.features.find(
+            f => f.properties.ISO === isoCode
+            );
+
+            if (!feature) {
+            console.error("Not found:", isoCode);
+            return;
+            }
+
+            const [lon, lat] = feature.geometry.coordinates;
+            map.setView([lat, lon], 6);
+        }
+      </script>
+  </body>
 </html>
