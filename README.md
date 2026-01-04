@@ -1,3 +1,3 @@
-github page served at
+Github page served at
 
 https://caropen.github.io/Mapwalker/
