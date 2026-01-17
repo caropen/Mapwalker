@@ -1,59 +1,174 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <title>Vector Tiles in Leaflet JS</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.umd.min.js"></script>
-    <link href="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.css" rel="stylesheet" />
-    <script src="https://cdn.maptiler.com/leaflet-maptilersdk/v4.1.0/leaflet-maptilersdk.umd.min.js"></script>
-    <style>
-      #map {
-        width: 50%;
-        height: 300px; /* fixed height */
-        margin: 0 auto 10px auto; /* top 0, auto left/right, bottom 10px */
-        display: block; /* ensure margin auto works */
+<head>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Country Highlighter</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script src="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.umd.min.js"></script>
+  <link href="https://cdn.maptiler.com/maptiler-sdk-js/v3.9.0/maptiler-sdk.css" rel="stylesheet" />
+  <script src="https://cdn.maptiler.com/leaflet-maptilersdk/v4.1.0/leaflet-maptilersdk.umd.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
     }
-    </style>
-  </head>
-  <body>
+
+    .app {
+      background: #ffffff;
+      padding: 1.5rem;
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+      width: 90%;
+      max-width: 800px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 1rem;
+      font-size: 1.5rem;
+    }
+
+    #map {
+      height: 60vh;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      margin-bottom: 1rem;
+    }
+
+    #CountryName {
+      margin: 1rem 0;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #111827;
+      background: #f3f4f6;
+      padding: 0.8rem 1.2rem;
+      border-radius: 12px;
+      display: block;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 14px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+    }
+
+    button:hover {
+      background: #1d4ed8;
+      transform: translateY(-2px);
+    }
+
+    #next{
+      display: none;
+    }
+
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <h1>Mapwalker</h1>
+
     <div id="map"></div>
-    <script>
-        const key = 'X3hcXwuznTkMoRRLJTQO';
-      
-        const map = L.map('map').setView([0, 0], 1);
-      
-        const mtLayer = L.maptiler.maptilerLayer({
-          apiKey: key,
-          style: "019b08a2-2edf-79a1-af13-437f1b7433e4", // custom style ID
-        }).addTo(map);
 
-         // Load GeoJSON (from file or variable)
-        fetch("countries.geojson")
-            .then(r => r.json())
-            .then(countries => {
-            // Add points to the map (optional)
-            // L.geoJSON(countries).addTo(map);
+    <div id="CountryName">What country is this?</div>
 
-            // Center on Germany (ISO code = DE)
-            centerOn("DE", countries);
-            });
+<button onclick="showCountry()" id="show">Show country</button>
+<button onclick="nextCountry()" id="next">Next country</button>
 
-        function centerOn(isoCode, geojson) {
-            const feature = geojson.features.find(
-            f => f.properties.ISO === isoCode
-            );
-            
+  </div>
 
-            if (!feature) {
-            console.error("Not found:", isoCode);
-            return;
-            }
+  <script>
+    const key = 'X3hcXwuznTkMoRRLJTQO';
+    const map = L.map('map').setView([0, 0], 2);
 
-            const [lon, lat] = feature.geometry.coordinates;
-            map.setView([lat, lon], 6);
+    L.maptiler.maptilerLayer({
+      apiKey: key,
+      style: "019b08a2-2edf-79a1-af13-437f1b7433e4",
+    }).addTo(map);
+
+    let highlightLayer = null;
+    let geoData = null;
+    let currentCountry = null;
+
+    fetch("CountryAreas.geo.json")
+      .then(r => r.json())
+      .then(data => {
+        geoData = data;
+        nextCountry();
+        // highlightCountry("DE",geoData);
+      })
+      .catch(err => console.error("Failed to load GeoJSON:", err));
+
+    // highlightCountry("DE",geoData);
+
+     function highlightCountry(feature) {
+      if (highlightLayer) {
+        map.removeLayer(highlightLayer);
+      }
+
+      highlightLayer = L.geoJSON(feature, {
+        style: {
+          color: "#ef4444",
+          weight: 2,
+          fillColor: "#ef4444",
+          fillOpacity: 0.35
         }
-      </script>
-  </body>
+      }).addTo(map);
+
+      map.fitBounds(highlightLayer.getBounds());
+    }
+
+    function showCountry() {
+      if (!currentCountry) return;
+
+      const name =
+        currentCountry.properties.ADMIN ||
+        currentCountry.properties.name ||
+        "Unknown";
+
+      document.getElementById("CountryName").textContent = name;
+
+      document.getElementById("show").style.display = "none";
+      document.getElementById("next").style.display = "inline-block";
+    }
+
+    function nextCountry() {
+      if (!geoData) return;
+
+      // Pick a random country feature
+      const features = geoData.features;
+      const randomIndex = Math.floor(Math.random() * features.length);
+      currentCountry = features[randomIndex];
+
+      // Highlight it
+      highlightCountry(currentCountry);
+
+      // Show Question
+      document.getElementById("CountryName").textContent = "What country is this?";
+      document.getElementById("show").style.display = "inline-block";
+      document.getElementById("next").style.display = "none";
+      // const name = country.properties.ADMIN || country.properties.name || "Unknown";
+      // document.getElementById("CountryName").textContent = name;
+    }
+  </script>
+</body>
 </html>
